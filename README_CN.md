@@ -56,3 +56,25 @@ python -m torch.distributed.launch --nproc_per_node=2 script/pretrain.py -c conf
 ```shell
 python -m torch.distributed.launch --nproc_per_node=3 script/downstream.py -c config/EC/esm_gearnet.yaml --ckpt <path_to_your_model>
 ```
+
+### 例子
+
+使用单机3卡进行下游任务EC预测：
+
+```shell
+python -m torch.distributed.launch --nproc_per_node=3 script/downstream.py -c config/EC/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+```
+
+使用单机单卡进行下游任务EC预测：
+
+```shell
+python script/downstream.py -c config/EC/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+```
+
+同理进行我们推理蛋白嵌入的下游任务：
+
+```shell
+python script/downstream.py -c config/inference/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+
+python -m torch.distributed.launch --nproc_per_node=3 script/downstream.py -c config/inference/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+```
