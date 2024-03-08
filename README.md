@@ -1,5 +1,6 @@
 # ESM-GearNet
 
+[README_CN.md](README_CN.md) forked by Zhenglu Chen. 
 
 This is the official codebase of the paper
 
