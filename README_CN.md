@@ -74,7 +74,7 @@ python script/downstream.py -c config/EC/esm_gearnet.yaml --ckpt ~/scratch/pretr
 同理进行我们推理蛋白嵌入的下游任务：
 
 ```shell
-python script/downstream.py -c config/inference/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+python script/inference.py -c config/inference/esm_gearnet.yaml
 
-python -m torch.distributed.launch --nproc_per_node=3 script/downstream.py -c config/inference/esm_gearnet.yaml --ckpt ~/scratch/pretrained_models/mc_esm_gearnet.pth
+python -m torch.distributed.launch --nproc_per_node=3 script/inference.py -c config/inference/esm_gearnet.yaml
 ```
