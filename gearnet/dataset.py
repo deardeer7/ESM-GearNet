@@ -1,5 +1,6 @@
 import os
 import math
+import pickle
 import h5py
 import glob
 import random
@@ -345,6 +346,74 @@ class MSPDataset(data.ProteinDataset, Atom3DDataset):
         lines = [
             "#sample: %d" % len(self),
             "#task: label",
+        ]
+        return "%s(\n  %s\n)" % (self.__class__.__name__, "\n  ".join(lines))
+    
+    
+@R.register("datasets.PROTACTargets")
+@utils.copy_args(data.ProteinDataset.load_pdbs)
+class PROTACTargets(data.ProteinDataset, Atom3DDataset):
+    """
+    PROTACTargets dataset.
+    Parameters:
+        path (str): Path to store the dataset.
+        transform (callable, optional): A function/transform that takes in a dictionary as input and returns a transformed version.
+        verbose (int, optional): Verbosity level
+        **kwargs: Additional arguments to pass to the loader
+    """
+
+    dir_name = "PROTACTargets"
+    processed_file = "PROTACTargets.pkl"
+
+    def __init__(self, path, transform=None, verbose=1, **kwargs):
+        path = os.path.join(os.path.expanduser(path), self.dir_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.path = path
+
+        pkl_file = os.path.join(path, self.processed_file)
+
+        if os.path.exists(pkl_file):
+            self.load_pickle(pkl_file, transform=transform, lazy=True, verbose=verbose, **kwargs)
+        else:
+            self.transform = transform
+            
+            pdb_files = glob.glob(os.path.join(path, "PDB", "*.pdb"))
+            self.load_pdbs(pdb_files, verbose=verbose, **kwargs)
+            
+            p_map = pickle.load(open(os.path.join(path, "p_map.pkl"), "rb"))
+
+            # abspath -> pdb file -> uniprot id 
+            self.sequences = [p_map[pdb.split('/')[-1][:-4]] for pdb in pdb_files]
+            
+            self.save_pickle(pkl_file, verbose=verbose)
+        # print('\n'.join(self.pdb_files[:5]))
+        # print('\n'.join(self.sequences[:5]))
+        # [train, val, test]
+        self.num_samples = [0, 0, len(self.data)]
+
+    def get_item(self, index):
+        protein = self.data[index]
+        protein = protein.subgraph(protein.atom_type != 0)
+        
+        if hasattr(protein, "residue_feature"):
+            with protein.residue():
+                protein.residue_feature = protein.residue_feature.to_dense()
+        
+        item = {"graph": protein}
+        if self.transform:
+            item = self.transform(item)
+        return item
+
+    @property
+    def tasks(self):
+        """List of tasks."""
+        return ["get_embedding"]
+
+    def __repr__(self):
+        lines = [
+            "#sample: %d" % len(self),
+            "#task: get_embedding",
         ]
         return "%s(\n  %s\n)" % (self.__class__.__name__, "\n  ".join(lines))
     

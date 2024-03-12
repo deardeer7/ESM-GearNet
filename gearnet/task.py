@@ -80,3 +80,23 @@ class MSP(tasks.InteractionPrediction):
                 / (scatter_add(node_mask2, graph2.atom2graph, dim=0, dim_size=graph2.batch_size) + 1e-10)
         pred = self.mlp(torch.cat([output1, output2], dim=-1))
         return pred
+
+@R.register("tasks.GetEmbedding")
+class GetEmbedding(tasks.Task, core.Configurable):
+    """
+    Get Embedding from a model.
+    Paremeters:
+        model (nn.Module): a model that takes a graph and node feature as input and returns a dictionary of output.
+        graph_construction_model (nn.Module, optional): a model that takes a graph as input and returns a graph.
+        verbose (int): the level of verbosity.
+    """
+
+    def __init__(self, model, graph_construction_model=None, verbose=0):
+        super(GetEmbedding, self).__init__(model, graph_construction_model=graph_construction_model, verbose=verbose)
+
+    def predict(self, batch, all_loss=None, metric=None):
+        graph = batch["graph"]
+        if self.graph_construction_model:
+            graph = self.graph_construction_model(graph)
+        pred = self.model(graph, graph.node_feature.float(), all_loss=all_loss, metric=metric)
+        return pred
